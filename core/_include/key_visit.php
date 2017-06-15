@@ -1,13 +1,15 @@
 <?php
 
 /**
- * KEY Module
+ * Key Visit Authority Module
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
+ * Author Yara <314850412@qq.com>
  *
- * Copyright 2015-2016 Jerry Shaw
- * Copyright 2016 秋水之冰
+ * Copyright 2015-2017 Jerry Shaw
+ * Copyright 2017 秋水之冰
+ * Copyright 2017 Yara
  *
  * This file is part of NervSys.
  *
@@ -24,7 +26,7 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class data_key
+class key_visit
 {
     //Data pool
     public static $key = [];
@@ -47,25 +49,25 @@ class data_key
         $Origin_HOST = $_SERVER['HTTP_ORIGIN'] ?? $Server_HOST;
         //Process HTTP requests
         if ('OPTIONS' !== $_SERVER['REQUEST_METHOD']) {
-            //Load user_crypt module from defined module path
-            load_lib(CRYPT_PATH, 'user_crypt');
+            //Load data_crypt module
+            load_lib('core', 'data_crypt');
             //Start SESSION
             if (Redis_SESSION) {
-                //Load Redis SESSION Controller
+                //Load SESSION module
                 load_lib('core', 'ctrl_session');
                 \ctrl_session::start();
             } else session_start();
             //Detect requests
             switch (self::$client) {
-                //For 127.0.0.1 requests
+                //Local request
                 case 'LOCAL':
                     if (!empty($_SESSION)) self::map_sess();
                     break;
-                //For third party requests
+                //Remote request
                 case 'REMOTE':
                     if (isset($_SERVER['HTTP_KEY'])) self::map_key();
                     break;
-                //Auto Detect
+                //Auto detect
                 default:
                     //Detect requested client type
                     if (isset($_SERVER['HTTP_ORIGIN'])) self::$client = $Server_HOST === $_SERVER['HTTP_ORIGIN'] ? self::chk_cookie() : 'REMOTE';
@@ -107,8 +109,7 @@ class data_key
             header('Access-Control-Allow-Origin: ' . $Origin_HOST);
             header('Access-Control-Allow-Methods: OPTIONS');
             header('Access-Control-Allow-Headers: KEY');
-            //Exit running after basic Cross-Domain request permission was granted
-            exit;
+            exit;//Exit running after basic Cross-Domain request permission was granted
         }
         unset($Server_HOST, $Origin_HOST);
     }
@@ -161,7 +162,7 @@ class data_key
     }
 
     /**
-     * Remove a/all content value from KEY
+     * Remove content from KEY
      * Return new KEY content after removing
      *
      * @param string $key
@@ -186,11 +187,12 @@ class data_key
 
     /**
      * Get KEY encrypted content
+     *
      * @return string
      */
     private static function get_key(): string
     {
-        return !empty(self::$key) ? \data_crypt::create_key(self::$key) : '';
+        return !empty(self::$key) ? \data_crypt::create_key(json_encode(self::$key)) : '';
     }
 
     /**
@@ -199,9 +201,13 @@ class data_key
     private static function map_key()
     {
         self::$client = 'REMOTE';
-        $content = \data_crypt::validate_key($_SERVER['HTTP_KEY']);
-        if (!empty($content) && isset($content['ExpireAt']) && time() < $content['ExpireAt']) self::$key = &$content;
-        unset($content);
+        $data = \data_crypt::validate_key($_SERVER['HTTP_KEY']);
+        if ('' !== $data) {
+            $key = json_decode($data, true);
+            if (isset($key) && (!isset($key['ExpireAt']) || (isset($key['ExpireAt']) && time() < $key['ExpireAt']))) self::$key = &$key;
+            unset($key);
+        }
+        unset($data);
     }
 
     /**
@@ -215,6 +221,7 @@ class data_key
 
     /**
      * Check COOKIE Key and Value with SESSION data
+     *
      * @return string
      */
     private static function chk_cookie(): string

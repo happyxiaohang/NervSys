@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Crypt Key Module
+ * Crypt Key Generator Module
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
@@ -24,7 +24,7 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class ctrl_key
+class key_crypt
 {
     /**
      * Generate Crypt Key
@@ -34,26 +34,6 @@ class ctrl_key
     public static function get_key(): string
     {
         return hash('sha256', get_uuid());
-    }
-
-    /**
-     * Get RSA Key-Pairs (Public Key & Private Key)
-     *
-     * @return array
-     */
-    public static function get_pkey(): array
-    {
-        $keys = ['public' => '', 'private' => ''];
-        $ssl = openssl_pkey_new(OpenSSL_CFG);
-        if (false !== $ssl) {
-            $public = openssl_pkey_get_details($ssl);
-            if (false !== $public) $keys['public'] = &$public['key'];
-            if (openssl_pkey_export($ssl, $private, null, OpenSSL_CFG)) $keys['private'] = &$private;
-            openssl_pkey_free($ssl);
-            unset($public, $private);
-        }
-        unset($ssl);
-        return $keys;
     }
 
     /**
@@ -87,7 +67,7 @@ class ctrl_key
      *
      * @return string (80 bits)
      */
-    public static function mixed_key(string $key): string
+    public static function get_mixed(string $key): string
     {
         $unit = str_split($key, 4);
         foreach ($unit as $k => $v) {
@@ -101,13 +81,13 @@ class ctrl_key
     }
 
     /**
-     * Get Clear Crypt Key
+     * Get Rebuilt Crypt Key
      *
      * @param string $key (80 bits)
      *
      * @return string (64 bits)
      */
-    public static function clear_key(string $key): string
+    public static function get_rebuilt(string $key): string
     {
         $unit = str_split($key, 5);
         foreach ($unit as $k => $v) {
