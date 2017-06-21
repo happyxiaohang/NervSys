@@ -1,15 +1,13 @@
 <?php
 
 /**
- * Data Encrypt/Decrypt Module
+ * Crypt Module
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
- * Author Yara <314850412@qq.com>
  *
  * Copyright 2017 Jerry Shaw
  * Copyright 2017 秋水之冰
- * Copyright 2017 Yara
  *
  * This file is part of NervSys.
  *
@@ -26,7 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class data_crypt
+
+namespace core\ctrl;
+
+class crypt
 {
     //Crypt methods
     const method = ['AES-256-CTR', 'CAMELLIA-256-CFB'];
@@ -62,9 +63,8 @@ class data_crypt
     public static function encode(string $string, array $keys): string
     {
         $string = openssl_encrypt($string, self::method[$keys['alg']], $keys['key'], 0, $keys['iv']);
-        if (false === $string) $string = '';
         unset($keys);
-        return $string;
+        return (string)$string;
     }
 
     /**
@@ -78,9 +78,8 @@ class data_crypt
     public static function decode(string $string, array $keys): string
     {
         $string = openssl_decrypt($string, self::method[$keys['alg']], $keys['key'], 0, $keys['iv']);
-        if (false === $string) $string = '';
         unset($keys);
-        return $string;
+        return (string)$string;
     }
 
     /**
@@ -90,13 +89,12 @@ class data_crypt
      *
      * @return string
      */
-    public static function get_type(string $key): string
+    private static function get_type(string $key): string
     {
         $start = strlen('-----BEGIN ');
         $end = strpos($key, ' KEY-----', $start);
         $type = false !== $end ? strtolower(substr($key, $start, $end)) : '';
-        unset($start, $end);
-        unset($key);
+        unset($key, $start, $end);
         return $type;
     }
 
@@ -186,8 +184,7 @@ class data_crypt
     public static function create_key(string $string, string $rsa_key = ''): string
     {
         if ('' !== $string) {
-            load_lib(CRYPT_PATH, CRYPT_NAME);
-            $crypt = '\\' . CRYPT_NAME;
+            $crypt = CRYPT_NAME;
             $key = $crypt::get_key();
             $keys = $crypt::get_keys($key);
             $mixed = $crypt::get_mixed($key);
@@ -213,8 +210,7 @@ class data_crypt
             $codes = explode('-', $signature, 2);
             $mixed = '' !== $rsa_key ? self::decrypt($codes[0], $rsa_key) : base64_decode($codes[0], true);
             if ('' !== $mixed) {
-                load_lib(CRYPT_PATH, CRYPT_NAME);
-                $crypt = '\\' . CRYPT_NAME;
+                $crypt = CRYPT_NAME;
                 $key = $crypt::get_rebuilt($mixed);
                 $keys = $crypt::get_keys($key);
                 $data = self::decode($codes[1], $keys);

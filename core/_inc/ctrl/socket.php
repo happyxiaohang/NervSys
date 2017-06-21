@@ -5,11 +5,9 @@
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
- * Author Yara <314850412@qq.com>
  *
  * Copyright 2017 Jerry Shaw
  * Copyright 2017 秋水之冰
- * Copyright 2017 Yara
  *
  * This file is part of NervSys.
  *
@@ -26,7 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class ctrl_socket
+
+namespace core\ctrl;
+
+class socket
 {
     //UDP Settings
     public static $udp_port = 64000;
@@ -34,7 +35,7 @@ class ctrl_socket
     public static $udp_broadcast = '255.255.255.255';
 
     //TCP Settings
-    public static $tcp_port = 60000;
+    public static $tcp_port = 62000;
     public static $tcp_address = '127.0.0.1';
 
     /**

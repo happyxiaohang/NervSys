@@ -5,11 +5,9 @@
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
- * Author 彼岸花开 <330931138@qq.com>
  *
- * Copyright 2015-2017 Jerry Shaw
- * Copyright 2016-2017 秋水之冰
- * Copyright 2016 彼岸花开
+ * Copyright 2017 Jerry Shaw
+ * Copyright 2017 秋水之冰
  *
  * This file is part of NervSys.
  *
@@ -61,12 +59,10 @@ function load_lib(string $module, string $library): string
  */
 function load_api(string $module, string $library, string $method): array
 {
-    $result = [];
     $class = load_lib($module, $library);
     if ('' !== $class) {
-        $method_list = get_class_methods($class);
         $api_list = SECURE_API && isset($class::$api) && is_array($class::$api) ? array_keys($class::$api) : [];
-        if (in_array($method, $method_list, true) && (in_array($method, $api_list, true) || 'init' === $method || !SECURE_API)) {
+        if (method_exists($class, $method) && (in_array($method, $api_list, true) || 'init' === $method || !SECURE_API)) {
             $reflect = new \ReflectionMethod($class, $method);
             if ($reflect->isPublic() && $reflect->isStatic()) {
                 try {
@@ -74,11 +70,11 @@ function load_api(string $module, string $library, string $method): array
                 } catch (\Throwable $exception) {
                     $result['data'] = $exception->getMessage();
                 }
-            }
+            } else $result['data'] = 'Method "' . $method . '" in "' . $library . '" NOT permitted!';
             unset($reflect);
-        }
-        unset($api_list, $method_list);
-    }
+        } else $result['data'] = 'Method "' . $method . '" in "' . $library . '" NOT exist or NOT permitted!';
+        unset($api_list);
+    } else $result['data'] = 'Class "' . $library . '" in "' . $module . '" NOT exist!';
     unset($module, $library, $method, $class);
     return $result;
 }
@@ -118,7 +114,7 @@ function escape_requests(array $requests): array
 function get_uuid(string $string = ''): string
 {
     if ('' === $string) $string = uniqid(mt_rand(), true);
-    elseif (1 === preg_match('/[A-Z]/', $string)) $string = mb_strtolower($string, 'UTF-8');
+    else if (1 === preg_match('/[A-Z]/', $string)) $string = mb_strtolower($string, 'UTF-8');
     $code = hash('sha1', $string . ':UUID');
     $uuid = substr($code, 0, 8);
     $uuid .= '-';
@@ -184,21 +180,19 @@ function get_client_info(): array
         $client_pos = strpos($XFF, ', ');
         $client_ip = false !== $client_pos ? substr($XFF, 0, $client_pos) : $XFF;
         unset($XFF, $client_pos);
-    } elseif (isset($_SERVER['HTTP_CLIENT_IP'])) $client_ip = $_SERVER['HTTP_CLIENT_IP'];
-    elseif (isset($_SERVER['REMOTE_ADDR'])) $client_ip = $_SERVER['REMOTE_ADDR'];
-    elseif (isset($_SERVER['LOCAL_ADDR'])) $client_ip = $_SERVER['LOCAL_ADDR'];
-    elseif (false !== getenv('HTTP_X_FORWARDED_FOR')) {
+    } else if (isset($_SERVER['HTTP_CLIENT_IP'])) $client_ip = $_SERVER['HTTP_CLIENT_IP'];
+    else if (isset($_SERVER['REMOTE_ADDR'])) $client_ip = $_SERVER['REMOTE_ADDR'];
+    else if (isset($_SERVER['LOCAL_ADDR'])) $client_ip = $_SERVER['LOCAL_ADDR'];
+    else if (false !== getenv('HTTP_X_FORWARDED_FOR')) {
         $XFF = getenv('HTTP_X_FORWARDED_FOR');
         $client_pos = strpos($XFF, ', ');
         $client_ip = false !== $client_pos ? substr($XFF, 0, $client_pos) : $XFF;
         unset($XFF, $client_pos);
-    } elseif (false !== getenv('HTTP_CLIENT_IP')) $client_ip = getenv('HTTP_CLIENT_IP');
-    elseif (false !== getenv('REMOTE_ADDR')) $client_ip = getenv('REMOTE_ADDR');
-    elseif (false !== getenv('LOCAL_ADDR')) $client_ip = getenv('LOCAL_ADDR');
+    } else if (false !== getenv('HTTP_CLIENT_IP')) $client_ip = getenv('HTTP_CLIENT_IP');
+    else if (false !== getenv('REMOTE_ADDR')) $client_ip = getenv('REMOTE_ADDR');
+    else if (false !== getenv('LOCAL_ADDR')) $client_ip = getenv('LOCAL_ADDR');
     else $client_ip = '0.0.0.0';
     $client_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $client_lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 5) : '';
-    $client_info = ['ip' => &$client_ip, 'lang' => &$client_lang, 'agent' => &$client_agent];
-    unset($client_ip, $client_lang);
-    return $client_info;
+    return ['ip' => &$client_ip, 'lang' => &$client_lang, 'agent' => &$client_agent];
 }

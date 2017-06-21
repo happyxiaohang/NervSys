@@ -5,13 +5,9 @@
  *
  * Author Jerry Shaw <jerry-shaw@live.com>
  * Author 秋水之冰 <27206617@qq.com>
- * Author Yara <314850412@qq.com>
- * Author 李盛青 <happyxiaohang@163.com>
  *
- * Copyright 2016-2017 Jerry Shaw
+ * Copyright 2017 Jerry Shaw
  * Copyright 2017 秋水之冰
- * Copyright 2017 Yara
- * Copyright 2017 李盛青
  *
  * This file is part of NervSys.
  *
@@ -28,7 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class ctrl_cli
+
+namespace core\ctrl;
+
+class cli
 {
     //Options
     public static $opt = [];
@@ -60,25 +59,25 @@ class ctrl_cli
             if (isset(self::$opt['log']) || isset(self::$opt['l'])) self::$opt_log = true;
             //Get "cmd" option
             if (isset(self::$opt['cmd']) && false !== self::$opt['cmd'] && '' !== self::$opt['cmd']) self::$opt_cmd = self::$opt['cmd'];
-            elseif (isset(self::$opt['c']) && false !== self::$opt['c'] && '' !== self::$opt['c']) self::$opt_cmd = self::$opt['c'];
+            else if (isset(self::$opt['c']) && false !== self::$opt['c'] && '' !== self::$opt['c']) self::$opt_cmd = self::$opt['c'];
             //Get "map" option
             if (isset(self::$opt['map']) && false !== self::$opt['map'] && '' !== self::$opt['map']) self::$opt_map = self::$opt['map'];
-            elseif (isset(self::$opt['m']) && false !== self::$opt['m'] && '' !== self::$opt['m']) self::$opt_map = self::$opt['m'];
+            else if (isset(self::$opt['m']) && false !== self::$opt['m'] && '' !== self::$opt['m']) self::$opt_map = self::$opt['m'];
             //Get "get" option
             if (isset(self::$opt['get']) && false !== self::$opt['get'] && '' !== self::$opt['get']) self::$opt_get = self::$opt['get'];
-            elseif (isset(self::$opt['g']) && false !== self::$opt['g'] && '' !== self::$opt['g']) self::$opt_get = self::$opt['g'];
+            else if (isset(self::$opt['g']) && false !== self::$opt['g'] && '' !== self::$opt['g']) self::$opt_get = self::$opt['g'];
             //Get "path" option
             if (isset(self::$opt['path']) && false !== self::$opt['path'] && '' !== self::$opt['path']) self::$opt_path = self::$opt['path'];
-            elseif (isset(self::$opt['p']) && false !== self::$opt['p'] && '' !== self::$opt['p']) self::$opt_path = self::$opt['p'];
+            else if (isset(self::$opt['p']) && false !== self::$opt['p'] && '' !== self::$opt['p']) self::$opt_path = self::$opt['p'];
             //Get "data" from option/STDIN
             if (isset(self::$opt['data']) && false !== self::$opt['data'] && '' !== self::$opt['data']) self::$opt_data = self::$opt['data'];
-            elseif (isset(self::$opt['d']) && false !== self::$opt['d'] && '' !== self::$opt['d']) self::$opt_data = self::$opt['d'];
+            else if (isset(self::$opt['d']) && false !== self::$opt['d'] && '' !== self::$opt['d']) self::$opt_data = self::$opt['d'];
             else self::$opt_data = self::get_stream([STDIN]);
             //Get "try" option
             if (isset(self::$opt['try'])) {
                 self::$opt['try'] = (int)self::$opt['try'];
                 if (0 < self::$opt['try']) self::$opt_try = self::$opt['try'];
-            } elseif (isset(self::$opt['t'])) {
+            } else if (isset(self::$opt['t'])) {
                 self::$opt['t'] = (int)self::$opt['t'];
                 if (0 < self::$opt['t']) self::$opt_try = self::$opt['t'];
             }
@@ -86,7 +85,7 @@ class ctrl_cli
             if (isset(self::$opt['wait'])) {
                 self::$opt['wait'] = (int)self::$opt['wait'];
                 if (0 < self::$opt['wait']) self::$opt_wait = self::$opt['wait'];
-            } elseif (isset(self::$opt['w'])) {
+            } else if (isset(self::$opt['w'])) {
                 self::$opt['w'] = (int)self::$opt['w'];
                 if (0 < self::$opt['w']) self::$opt_wait = self::$opt['w'];
             }
@@ -203,20 +202,16 @@ class ctrl_cli
     private static function call_api(): array
     {
         $result = [];
-        //Load Data Module
-        load_lib('core', 'data_pool');
-        //Pass data to Data Module
-        \data_pool::$cli = self::$var;
-        //Start data_pool process
-        \data_pool::start();
-        //Get API Result
-        $data = \data_pool::$pool;
+        //Pass data to Data Pool Module
+        pool::$cli = self::$var;
+        //Start Data Pool Module
+        pool::start();
         //Save logs
         if (self::$opt_log) {
             $logs = ['cmd' => self::$opt_cmd];
             $logs['map'] = self::$opt_map;
             $logs['data'] = self::$opt_data;
-            $logs['result'] = json_encode($data);
+            $logs['result'] = json_encode(pool::$pool);
             self::save_log($logs);
             unset($logs);
         }
@@ -225,9 +220,8 @@ class ctrl_cli
             if (false !== strpos(self::$opt_get, 'cmd')) $result['cmd'] = self::$opt_cmd;
             if (false !== strpos(self::$opt_get, 'map')) $result['map'] = self::$opt_map;
             if (false !== strpos(self::$opt_get, 'data')) $result['data'] = self::$opt_data;
-            if (false !== strpos(self::$opt_get, 'result')) $result['result'] = &$data;
+            if (false !== strpos(self::$opt_get, 'result')) $result['result'] = pool::$pool;
         }
-        unset($data);
         return $result;
     }
 

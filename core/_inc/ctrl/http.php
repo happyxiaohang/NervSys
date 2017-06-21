@@ -24,7 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with NervSys. If not, see <http://www.gnu.org/licenses/>.
  */
-class ctrl_http
+
+namespace core\ctrl;
+
+class http
 {
     //Request URL
     public static $url = '';
